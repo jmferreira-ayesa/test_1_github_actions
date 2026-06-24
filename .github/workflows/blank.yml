@@ -26,11 +26,11 @@ jobs:
       - name: Checkout del código
         uses: actions/checkout@v4
  
-      - name: Configurar JDK 21
+      - name: Configurar JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '17'
           # cache: maven gestiona automáticamente el caché de ~/.m2/repository
           # entre ejecuciones, usando el hash de pom.xml como clave. Ahorra
           # 1-2 minutos por ejecución sin que tengas que configurar nada más.
