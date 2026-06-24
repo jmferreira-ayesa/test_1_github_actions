@@ -1,0 +1,70 @@
+{
+  "family": "demo-backend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+
+  "_comment_roles": "executionRoleArn = permisos para que ECS pueda tirar de ECR y escribir logs. taskRoleArn = permisos que tiene TU APLICACIÓN en runtime (ej. leer un secret de Secrets Manager, escribir en S3...). Son roles distintos, no los confundas.",
+  "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/demo-backend-execution-role",
+  "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/demo-backend-task-role",
+
+  "containerDefinitions": [
+    {
+      "name": "demo-backend",
+      "image": "<ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/demo-backend:latest",
+      "essential": true,
+
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+
+      "environment": [
+        {
+          "name": "APP_CORS_ALLOWED_ORIGINS",
+          "value": "https://d111111abcdef8.cloudfront.net,https://app.tudominio.com"
+        },
+        {
+          "name": "SPRING_PROFILES_ACTIVE",
+          "value": "prod"
+        }
+      ],
+
+      "_comment_secrets": "Así es como se inyectan credenciales de Aurora sin que aparezcan nunca en texto plano en el task definition ni en los logs. El ARN apunta a un secret en Secrets Manager (idealmente el mismo que genera la rotación automática al crear la instancia de RDS).",
+      "secrets": [
+        {
+          "name": "SPRING_DATASOURCE_USERNAME",
+          "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:demo-backend/db-credentials:username::"
+        },
+        {
+          "name": "SPRING_DATASOURCE_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:demo-backend/db-credentials:password::"
+        }
+      ],
+
+      "_comment_healthcheck": "ECS usa esto para reiniciar tareas que no responden. Es independiente del health check del ALB, pero deben apuntar al mismo endpoint para que ambos cuenten la misma historia.",
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget -q --spider http://localhost:8080/actuator/health/readiness || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
+      },
+
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/demo-backend",
+          "awslogs-region": "<REGION>",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

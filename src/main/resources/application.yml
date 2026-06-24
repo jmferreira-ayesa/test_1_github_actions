@@ -1,0 +1,46 @@
+server:
+  port: 8080
+  # Apagado ordenado: cuando ECS manda SIGTERM en un despliegue rolling,
+  # esto da tiempo a las peticiones en curso a terminar antes de matar el
+  # contenedor (evita 502 esporádicos durante deploys).
+  shutdown: graceful
+
+spring:
+  application:
+    name: demo-backend
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+app:
+  cors:
+    # Valor por defecto para desarrollo local (Angular en 4200, Vite/Vue en 5173).
+    # En ECS se sobreescribe vía variable de entorno APP_CORS_ALLOWEDORIGINS.
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:5173}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Solo exponemos lo necesario. Nunca expongas /actuator/env o
+        # /actuator/heapdump públicamente sin protegerlos.
+        include: health,info
+  endpoint:
+    health:
+      # Habilita /actuator/health/liveness y /actuator/health/readiness,
+      # que es justo lo que necesitas para diferenciar "el contenedor
+      # está vivo" de "el contenedor está listo para recibir tráfico"
+      # (el ALB y el health check de ECS deben mirar a /readiness, no solo
+      # a la salud genérica, sobre todo si tienes dependencias externas).
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+logging:
+  pattern:
+    # Sin timestamp completo redundante: CloudWatch Logs ya añade su propio
+    # timestamp de ingesta. Mantenlo simple para que sea fácil de leer/parsear.
+    console: "%-5level [%thread] %logger{36} - %msg%n"
