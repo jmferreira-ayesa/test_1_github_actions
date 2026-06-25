@@ -49,31 +49,5 @@ jobs:
 
     - name: Sync to S3
       run: aws s3 sync ./target/ s3://enlace-github-jmferreira --delete
-      
-    - name: Login ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
-
-    - name: Build Docker Image
-      run: |
-        docker build -t $ECR_REPOSITORY:${{ github.sha }} .
-
-    - name: Tag Image
-      run: |
-          docker tag $ECR_REPOSITORY:${{ github.sha }} \
-          ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:${{ github.sha }}
-
-    - name: Push Image
-      run: |
-          docker push \
-          ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:${{ github.sha }}
-
-    - name: Force ECS Deployment
-      run: |
-          aws ecs update-service \
-            --cluster $ECS_CLUSTER \
-            --service $ECS_SERVICE \
-            --force-new-deployment
-      
 
     
