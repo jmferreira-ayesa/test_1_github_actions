@@ -1,32 +1,8 @@
-<<<<<<< HEAD
-name: Deploy to Amazon ECS
-=======
 name: Deploy Image in ECR
->>>>>>> 840bb8b5fd279a925ae8ec7811432a17e9af12cd
 
 on:
   workflow_dispatch:
 
-<<<<<<< HEAD
-env:
-  AWS_REGION: eu-west-1                   # set this to your preferred AWS region, e.g. us-west-1
-  ECR_REPOSITORY: github/apps           # set this to your Amazon ECR repository name
-  ECS_SERVICE: springboot-task-service-4ginxhmi                 # set this to your Amazon ECS service name
-  ECS_CLUSTER: app-cluster                 # set this to your Amazon ECS cluster name
-  ECS_TASK_DEFINITION: springboot-task # set this to the path to your Amazon ECS task definition
-  # file, e.g. .aws/task-definition.json
-  CONTAINER_NAME: container_app           # set this to the name of the container in the
-  # containerDefinitions section of your task definition
-
-permissions:
-  contents: read
-
-jobs:
-  deploy:
-    name: Deploy
-    runs-on: ubuntu-latest
-    environment: production
-=======
 permissions:
   id-token: write   # 🔴 obligatorio para OIDC
   contents: read
@@ -38,7 +14,6 @@ env:
 jobs:
   test-aws-login:
     runs-on: ubuntu-latest
->>>>>>> 840bb8b5fd279a925ae8ec7811432a17e9af12cd
 
     steps:
       - name: Checkout
@@ -49,23 +24,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-<<<<<<< HEAD
-          # cache: maven gestiona automáticamente el caché de ~/.m2/repository
-          # entre ejecuciones, usando el hash de pom.xml como clave. Ahorra
-          # 1-2 minutos por ejecución sin que tengas que configurar nada más.
-          cache: maven
-
-      - name: Ejecutar maven
-        run: mvn clean install
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        id: S3
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-=======
           cache: maven
 
       - name: Ejecutar maven
@@ -79,37 +37,10 @@ jobs:
 
       - name: Print confirmation
         run: echo "OIDC login successful 🎉"
->>>>>>> 840bb8b5fd279a925ae8ec7811432a17e9af12cd
 
       - name: Login ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-<<<<<<< HEAD
-
-      - name: Build Docker Image
-        run: |
-          docker build -t $ECR_REPOSITORY:${{ github.sha }} .
-
-      - name: Tag Image
-        run: |
-          docker tag $ECR_REPOSITORY:${{ github.sha }} \
-          ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:${{ github.sha }}
-
-      - name: Push Image
-        run: |
-          docker push \
-          ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:${{ github.sha }}
-
-      - name: Force ECS Deployment
-        run: |
-          aws ecs update-service \
-            --cluster $ECS_CLUSTER \
-            --service $ECS_SERVICE \
-            --force-new-deployment
-      
-
-    
-=======
       
       - name: Build Docker Image
         run: |
@@ -125,4 +56,3 @@ jobs:
 
 
 
->>>>>>> 840bb8b5fd279a925ae8ec7811432a17e9af12cd
