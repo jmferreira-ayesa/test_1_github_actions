@@ -8,7 +8,7 @@ permissions:
   contents: read
 env:
   AWS_REGION: eu-west-1                   # set this to your preferred AWS region, e.g. us-west-1
-  ECR_REPOSITORY: repository/ecr_git_hub           # set this to your Amazon ECR repository name
+  ECR_REPOSITORY: ecr_git_hub           # set this to your Amazon ECR repository name
   CONTAINER_NAME: container_app   
   
 jobs:
