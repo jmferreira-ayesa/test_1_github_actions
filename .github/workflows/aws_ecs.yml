@@ -1,0 +1,51 @@
+name: Deploy to ECS
+
+on:
+  workflow_dispatch:
+
+
+permissions:
+  id-token: write   # imprescindible para OIDC, sin esto falla la autenticación
+  contents: read
+
+env:
+  AWS_REGION: eu-west-1                    # p.ej. eu-west-1
+  ECR_REPOSITORY: ecr_git_hub
+  ECS_CLUSTER: example-ecs-cluster
+  ECS_SERVICE: example-app-service
+  ECS_TASK_DEFINITION: example-app-task
+  CONTAINER_NAME: app   # nombre del contenedor dentro de la task definition
+
+jobs:
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - name: Configurar credenciales AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::026090539332:role/github_rol_apps_ocdi
+          aws-region: eu-west-1
+
+      - name: Descargar la task definition activa actualmente en ECS
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition "${{ env.ECS_TASK_DEFINITION }}" \
+            --query taskDefinition > task-definition.json
+
+      - name: Sustituir la imagen en la task definition
+        id: render-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ needs.build-and-push.outputs.image }}
+
+      - name: Registrar nueva revisión y actualizar el servicio ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true   # el job no termina OK hasta que el deploy esté realmente sano
