@@ -14,6 +14,7 @@ env:
   ECS_SERVICE: example-app-service
   ECS_TASK_DEFINITION: example-app-task
   CONTAINER_NAME: app   # nombre del contenedor dentro de la task definition
+  IMAGE_URI: 026090539332.dkr.ecr.eu-west-1.amazonaws.com/ecr_git_hub
 
 jobs:
   test-aws-login:
@@ -38,7 +39,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: ${{ env.CONTAINER_NAME }}
-          image: ${{ needs.build-and-push.outputs.image }}
+          image: ${{ env.IMAGE_URI }}:${{ github.sha }}
 
       - name: Registrar nueva revisión y actualizar el servicio ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
